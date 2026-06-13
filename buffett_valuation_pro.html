@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Oracle's Framework — Buffett Valuation Engine Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  --bg:       #080F1A;
+  --bg1:      #0D1825;
+  --bg2:      #132030;
+  --bg3:      #1A2A3F;
+  --gold:     #C9A44C;
+  --gold2:    #E8C86A;
+  --cream:    #EDE8DC;
+  --dim:      #8899AA;
+  --border:   rgba(201,164,76,.18);
+  --green:    #1F8A52;
+  --green2:   #28B56B;
+  --amber:    #B87A1C;
+  --red:      #B03030;
+  --red2:     #D94040;
+  --info:     #2E7DBF;
+  --serif:    'Playfair Display', Georgia, serif;
+  --mono:     'JetBrains Mono', 'Courier New', monospace;
+  --sans:     'Inter', system-ui, sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--cream);font-family:var(--sans);font-size:13px;min-height:100vh;line-height:1.6}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg1)}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px}
+
+/* ─── HEADER ─── */
+.site-header{background:var(--bg1);border-bottom:1px solid var(--border);padding:18px 24px 14px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.logo-block .eyebrow{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);font-family:var(--mono);margin-bottom:4px}
+.logo-block h1{font-family:var(--serif);font-size:22px;color:var(--cream);line-height:1.1}
+.logo-block h1 span{color:var(--gold)}
+.gauge-wrap{margin-left:auto;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.gauge-item{text-align:center}
+.gauge-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-family:var(--mono);margin-bottom:3px}
+.gauge-val{font-family:var(--mono);font-size:18px;font-weight:600;transition:color .4s}
+.gauge-div{width:1px;height:28px;background:var(--border)}
+.verdict-pill{padding:5px 14px;border-radius:16px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;border:1.5px solid;transition:all .4s;white-space:nowrap}
+
+/* ─── NAV ─── */
+.main-nav{background:var(--bg1);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 16px;gap:2px;position:sticky;top:0;z-index:50}
+.main-nav::-webkit-scrollbar{height:2px}
+.nav-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--dim);font-family:var(--sans);font-size:12px;font-weight:600;padding:11px 14px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.nav-btn:hover{color:var(--cream)}
+.nav-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav-num{font-family:var(--mono);font-size:9px;margin-right:5px;opacity:.5}
+
+/* ─── LAYOUT ─── */
+.main{max-width:780px;margin:0 auto;padding:24px 16px 48px}
+.panel{display:none}
+.panel.active{display:block}
+
+/* ─── TYPOGRAPHY ─── */
+.eyebrow{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-family:var(--mono);margin-bottom:6px}
+.sec-title{font-family:var(--serif);font-size:22px;color:var(--cream);margin-bottom:8px;line-height:1.25}
+.sec-desc{font-size:12px;color:var(--dim);line-height:1.75;margin-bottom:20px}
+
+/* ─── QUOTE ─── */
+.q-card{background:var(--bg2);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 16px;margin:16px 0}
+.q-text{font-family:var(--serif);font-style:italic;font-size:13.5px;line-height:1.7;color:var(--cream);margin-bottom:6px}
+.q-attr{font-family:var(--mono);font-size:10px;color:var(--gold);letter-spacing:.3px}
+
+/* ─── CARDS & GRIDS ─── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.card-sm{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 14px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+
+/* ─── FORM ─── */
+.field{margin-bottom:16px}
+.field-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.field-name{font-size:12px;font-weight:600;color:var(--cream)}
+.field-sub{font-size:10px;color:var(--dim);margin-top:2px}
+.fval{font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:600}
+
+input[type=range]{width:100%;-webkit-appearance:none;height:4px;background:var(--bg3);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(201,164,76,.5)}
+input[type=number],input[type=text]{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--cream);font-family:var(--mono);font-size:14px;outline:none;transition:border-color .2s}
+input[type=number]:focus,input[type=text]:focus{border-color:var(--gold)}
+.range-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);font-family:var(--mono);margin-top:3px}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--cream);font-family:var(--sans);font-size:13px;outline:none;cursor:pointer}
+select:focus{border-color:var(--gold)}
+
+/* ─── CHECKLIST ─── */
+.chk-list{display:grid;gap:8px;margin-bottom:16px}
+.chk-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .2s;-webkit-user-select:none;user-select:none}
+.chk-item:hover{border-color:rgba(201,164,76,.4)}
+.chk-item.on{border-color:var(--green2);background:rgba(31,138,82,.07)}
+.chk-box{width:17px;height:17px;border:1.5px solid var(--dim);border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .2s;color:transparent}
+.chk-item.on .chk-box{background:var(--green2);border-color:var(--green2);color:#fff}
+.chk-title{font-size:12px;font-weight:600;color:var(--cream);margin-bottom:2px}
+.chk-desc{font-size:11px;color:var(--dim);line-height:1.5}
+
+/* ─── RESULT ROW ─── */
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.res-row:last-child{border-bottom:none}
+.res-key{font-size:12px;color:var(--dim)}
+.res-val{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--cream)}
+.res-val.big{font-size:20px}
+
+/* ─── METER ─── */
+.meter-wrap{background:var(--bg3);border-radius:4px;height:7px;overflow:hidden;margin:8px 0}
+.meter-fill{height:100%;border-radius:4px;transition:width .5s ease,background .5s ease}
+
+/* ─── STARS ─── */
+.stars{display:flex;gap:4px}
+.star{font-size:18px;opacity:.25;cursor:pointer;transition:opacity .15s;-webkit-user-select:none;user-select:none;line-height:1}
+.star.on{opacity:1}
+
+/* ─── CHART CONTAINERS ─── */
+.chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin:16px 0;position:relative}
+.chart-title{font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:var(--mono)}
+.chart-canvas{width:100%!important;max-height:260px}
+
+/* ─── SENSITIVITY MATRIX ─── */
+.sens-wrap{overflow-x:auto;margin:16px 0}
+.sens-tbl{width:100%;border-collapse:separate;border-spacing:3px;min-width:440px}
+.sens-tbl th{font-family:var(--mono);font-size:10px;color:var(--dim);padding:5px 6px;text-align:center;font-weight:600;white-space:nowrap}
+.sens-tbl td{font-family:var(--mono);font-size:11px;padding:7px 6px;text-align:center;border-radius:4px;color:#fff;font-weight:600;min-width:60px;transition:all .4s;cursor:default}
+.sens-tbl td:hover{transform:scale(1.06);z-index:2;position:relative}
+.sens-corner{background:transparent!important}
+
+/* ─── MOS GAUGE ─── */
+.mos-gauge-wrap{display:flex;align-items:center;justify-content:center;padding:20px 0 8px}
+.mos-gauge-svg{width:260px;height:140px}
+
+/* ─── EXCEPTION CARDS ─── */
+.exc-grid{display:grid;gap:12px;margin-bottom:20px}
+.exc-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .2s}
+.exc-card:hover{border-color:rgba(201,164,76,.4)}
+.exc-header{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.exc-icon{font-size:20px;flex-shrink:0}
+.exc-co{font-weight:700;font-size:13px;color:var(--cream)}
+.exc-sub{font-size:11px;color:var(--dim);margin-top:2px}
+.exc-result{margin-left:auto;text-align:right}
+.exc-badge{display:inline-block;font-size:9px;padding:2px 8px;border-radius:10px;font-weight:700;font-family:var(--mono)}
+.badge-win{background:rgba(31,138,82,.25);color:var(--green2)}
+.badge-loss{background:rgba(176,48,48,.25);color:var(--red2)}
+.badge-miss{background:rgba(46,125,191,.25);color:#5AABF5}
+.badge-lesson{background:rgba(184,122,28,.25);color:#F0A030}
+.exc-body{padding:12px 14px;display:none}
+.exc-body.open{display:block}
+.exc-q{font-family:var(--serif);font-style:italic;font-size:12.5px;line-height:1.65;color:var(--cream);border-left:3px solid var(--gold);padding-left:10px;margin-bottom:8px}
+.exc-lesson{font-size:11px;color:var(--dim);line-height:1.6;background:var(--bg3);border-radius:6px;padding:8px 10px}
+.exc-lesson strong{color:var(--gold)}
+
+/* ─── METRICS GRID ─── */
+.metric-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.metric-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;font-family:var(--mono)}
+.metric-val{font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:2px}
+.metric-bench{font-size:10px;color:var(--dim)}
+
+/* ─── VERDICT CIRCLE ─── */
+.verdict-wrap{text-align:center;padding:24px 0 16px}
+.verdict-ring{width:130px;height:130px;border-radius:50%;border:3px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 16px;transition:all .5s}
+.verdict-big{font-family:var(--mono);font-size:36px;font-weight:600}
+.verdict-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:.6}
+.verdict-word{font-family:var(--serif);font-size:24px;margin-bottom:6px;transition:color .5s}
+.verdict-desc{font-size:12px;color:var(--dim);max-width:360px;margin:0 auto;line-height:1.7}
+
+/* ─── BUTTONS ─── */
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-family:var(--sans);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.btn-gold{background:var(--gold);color:var(--bg)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--cream);border-color:var(--dim)}
+.btn-row{display:grid;grid-template-columns:1fr 2fr;gap:8px;margin-top:14px}
+
+/* ─── TIP BOX ─── */
+.tip{background:rgba(201,164,76,.07);border:1px solid rgba(201,164,76,.2);border-radius:8px;padding:12px 14px;margin:14px 0;font-size:11px;color:var(--cream);line-height:1.7}
+.tip strong{color:var(--gold)}
+.tip.info{background:rgba(46,125,191,.07);border-color:rgba(46,125,191,.2);color:var(--dim)}
+.tip.danger{background:rgba(176,48,48,.07);border-color:rgba(176,48,48,.2)}
+
+/* ─── BUFFETT RULES TABLE ─── */
+.rules-tbl{width:100%;border-collapse:collapse;margin:14px 0}
+.rules-tbl th{background:var(--bg3);padding:8px 12px;text-align:left;font-size:11px;color:var(--gold);font-family:var(--mono);border-bottom:1px solid var(--border)}
+.rules-tbl td{padding:8px 12px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
+.rules-tbl td:first-child{color:var(--dim);font-family:var(--mono);font-size:11px;white-space:nowrap}
+.rules-tbl tr:last-child td{border-bottom:none}
+
+/* ─── DIVIDER ─── */
+hr{border:none;border-top:1px solid var(--border);margin:22px 0}
+
+/* ─── SECTION LABEL ─── */
+.section-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-family:var(--mono);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.section-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ─── BREAKDOWN GRID ─── */
+.breakdown-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:16px 0}
+.breakdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+.breakdown-score{font-family:var(--mono);font-size:22px;font-weight:600;margin:4px 0}
+.breakdown-of{font-size:10px;color:var(--dim)}
+.breakdown-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim);margin-bottom:2px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:500px){
+  .grid-2,.grid-3,.breakdown-grid{grid-template-columns:1fr}
+  .site-header{flex-direction:column;gap:12px}
+  .gauge-wrap{margin-left:0;width:100%;justify-content:space-between}
+  .gauge-div{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ SITE HEADER ═══ -->
+<header class="site-header">
+  <div class="logo-block">
+    <div class="eyebrow">Berkshire 2.0 · Valuation Engine Pro</div>
+    <h1>The <span>Oracle's</span> Framework</h1>
+  </div>
+  <div class="gauge-wrap">
+    <div class="gauge-item">
+      <div class="gauge-label">Business</div>
+      <div class="gauge-val" id="t-biz" style="color:var(--dim)">—</div>
+    </div>
+    <div class="gauge-div"></div>
+    <div class="gauge-item">
+      <div class="gauge-label">Moat</div>
+      <div class="gauge-val" id="t-moat" style="color:var(--dim)">—</div>
+    </div>
+    <div class="gauge-div"></div>
+    <div class="gauge-item">
+      <div class="gauge-label">MOS</div>
+      <div class="gauge-val" id="t-mos" style="color:var(--dim)">—</div>
+    </div>
+    <div class="gauge-div"></div>
+    <div class="gauge-item">
+      <div class="gauge-label">Score</div>
+      <div class="gauge-val" id="t-total" style="color:var(--dim)">0/100</div>
+    </div>
+    <div class="verdict-pill" id="t-pill" style="border-color:var(--dim);color:var(--dim)">Belum dinilai</div>
+  </div>
+</header>
+
+<!-- ═══ MAIN NAV ═══ -->
+<nav class="main-nav">
+  <button class="nav-btn active" onclick="goTab(0)"><span class="nav-num">01</span>Bisnis</button>
+  <button class="nav-btn" onclick="goTab(1)"><span class="nav-num">02</span>Moat</button>
+  <button class="nav-btn" onclick="goTab(2)"><span class="nav-num">03</span>Owner Earnings</button>
+  <button class="nav-btn" onclick="goTab(3)"><span class="nav-num">04</span>Margin of Safety</button>
+  <button class="nav-btn" onclick="goTab(4)"><span class="nav-num">05</span>Manajemen</button>
+  <button class="nav-btn" onclick="goTab(5)"><span class="nav-num">06</span>Buffett Exceptions</button>
+  <button class="nav-btn" onclick="goTab(6)"><span class="nav-num">07</span>Verdict</button>
+</nav>
+
+<main class="main">
+
+<!-- ══════════════════════════════════════
+     PANEL 1 — BUSINESS FUNDAMENTALS
+══════════════════════════════════════ -->
+<div class="panel active" id="p0">
+  <div class="eyebrow">Step 01 · Business Profile</div>
+  <div class="sec-title">Pahami bisnisnya terlebih dahulu</div>
+  <div class="sec-desc">Buffett menolak bisnis yang tidak bisa dia jelaskan dalam dua kalimat. Sebelum angka, pastikan kamu benar-benar mengerti cara bisnis ini menghasilkan uang.</div>
+
+  <div class="q-card">
+    <div class="q-text">"Never invest in a business you cannot understand. The first question I ask is: Can I understand this business?"</div>
+    <div class="q-attr">— Warren Buffett · Annual Letter 1996</div>
+  </div>
+
+  <div class="field">
+    <div class="field-hd"><span class="field-name">Nama Bisnis</span></div>
+    <input type="text" id="biz-name" placeholder="e.g. Apple Inc, Data Research Platform..." oninput="updateAll()">
+  </div>
+
+  <div class="field">
+    <div class="field-hd"><span class="field-name">Sektor Industri</span></div>
+    <select id="biz-sector" onchange="updateAll()">
+      <option value="">Pilih sektor...</option>
+      <option>Consumer Products (brand moat)</option>
+      <option>Financial Services (insurance/banking)</option>
+      <option>Technology (software/SaaS)</option>
+      <option>Crypto / DeFi / Web3</option>
+      <option>Energy & Utilities</option>
+      <option>Transportation & Logistics</option>
+      <option>Healthcare</option>
+      <option>Manufacturing & Industrial</option>
+      <option>Retail & Distribution</option>
+      <option>Media & Entertainment</option>
+    </select>
+  </div>
+
+  <div class="section-lbl">Metrik Keuangan Fundamental</div>
+
+  <div class="grid-3">
+    <div class="metric-card">
+      <div class="metric-label">ROE (%)</div>
+      <input type="number" id="m-roe" placeholder="20" oninput="updateMetrics()" style="text-align:center;margin-top:4px">
+      <div class="metric-bench">Buffett min: 15%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">ROIC (%)</div>
+      <input type="number" id="m-roic" placeholder="15" oninput="updateMetrics()" style="text-align:center;margin-top:4px">
+      <div class="metric-bench">Great: >12%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Gross Margin (%)</div>
+      <input type="number" id="m-gm" placeholder="40" oninput="updateMetrics()" style="text-align:center;margin-top:4px">
+      <div class="metric-bench">Moat signal: >40%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Net Margin (%)</div>
+      <input type="number" id="m-nm" placeholder="15" oninput="updateMetrics()" style="text-align:center;margin-top:4px">
+      <div class="metric-bench">Good: >10%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Debt/Equity</div>
+      <input type="number" id="m-de" placeholder="0.5" step="0.1" oninput="updateMetrics()" style="text-align:center;margin-top:4px">
+      <div class="metric-bench">Buffett max: ~1.0</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">FCF Growth %/yr</div>
+      <input type="number" id="m-fcf" placeholder="12" oninput="updateMetrics()" style="text-align:center;margin-top:4px">
+      <div class="metric-bench">Consistent: key</div>
+    </div>
+  </div>
+
+  <div class="card" id="metrics-result">
+    <div class="res-row"><span class="res-key">ROE vs Benchmark</span><span class="res-val" id="r-roe">—</span></div>
+    <div class="res-row"><span class="res-key">ROIC vs Benchmark</span><span class="res-val" id="r-roic">—</span></div>
+    <div class="res-row"><span class="res-key">Capital Efficiency</span><span class="res-val" id="r-cap">—</span></div>
+    <div class="res-row"><span class="res-key">Debt Risk Level</span><span class="res-val" id="r-debt">—</span></div>
+    <div class="res-row"><span class="res-key">Metrics Score</span><span class="res-val big" id="r-mscore" style="color:var(--gold)">—</span></div>
+  </div>
+
+  <div class="section-lbl">Circle of Competence Test</div>
+
+  <div class="chk-list" id="bq-checks">
+    <div class="chk-item" onclick="tog(this,'bq1')"><div class="chk-box">✓</div><div><div class="chk-title">Aku bisa jelaskan bisnis ini dalam 2 kalimat</div><div class="chk-desc">Bisa dijelaskan kepada anak SD tanpa jargon</div></div></div>
+    <div class="chk-item" onclick="tog(this,'bq2')"><div class="chk-box">✓</div><div><div class="chk-title">Bisnis ini menjual sesuatu yang dibutuhkan, bukan sekadar diinginkan</div><div class="chk-desc">Orang tetap beli bahkan dalam resesi ekonomi</div></div></div>
+    <div class="chk-item" onclick="tog(this,'bq3')"><div class="chk-box">✓</div><div><div class="chk-title">Aku bisa bayangkan bisnis ini masih ada dalam 20 tahun</div><div class="chk-desc">"Our favorite holding period is forever" — Buffett</div></div></div>
+    <div class="chk-item" onclick="tog(this,'bq4')"><div class="chk-box">✓</div><div><div class="chk-title">Revenue stream predictable dan stabil dari tahun ke tahun</div><div class="chk-desc">Buffett suka bisnis boring yang bisa diprediksi cash flow-nya</div></div></div>
+    <div class="chk-item" onclick="tog(this,'bq5')"><div class="chk-box">✓</div><div><div class="chk-title">Tidak butuh modal terus-menerus untuk mempertahankan posisinya</div><div class="chk-desc">See's Candies model: ambil semua profit, bisnis tetap berjalan sempurna</div></div></div>
+    <div class="chk-item" onclick="tog(this,'bq6')"><div class="chk-box">✓</div><div><div class="chk-title">Produk/jasa tidak mudah dihancurkan oleh teknologi baru</div><div class="chk-desc">Buffett hindari bisnis yang bisa di-disrupt sebelum balik modal</div></div></div>
+    <div class="chk-item" onclick="tog(this,'bq7')"><div class="chk-box">✓</div><div><div class="chk-title">Kompetitor utama sudah diidentifikasi dan dipahami</div><div class="chk-desc">Tahu kekuatan dan kelemahan masing-masing pemain di pasar</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="res-row"><span class="res-key">Circle of Competence Score</span><span class="res-val" id="bq-score">0/7</span></div>
+    <div class="meter-wrap"><div class="meter-fill" id="bq-bar" style="width:0%;background:var(--red)"></div></div>
+    <div class="res-row" style="margin-top:8px"><span class="res-key">Business Quality Total</span><span class="res-val big" id="bq-total" style="color:var(--gold)">0/25</span></div>
+  </div>
+
+  <button class="btn btn-gold" onclick="goTab(1)">Lanjut ke Moat Analysis →</button>
+</div>
+
+<!-- ══════════════════════════════════════
+     PANEL 2 — MOAT
+══════════════════════════════════════ -->
+<div class="panel" id="p1">
+  <div class="eyebrow">Step 02 · Competitive Moat</div>
+  <div class="sec-title">Seberapa dalam paritnya?</div>
+  <div class="sec-desc">Buffett bilang moat adalah satu-satunya hal yang membuat bisnis bagus menjadi bisnis luar biasa. Tanpa moat, profit hari ini adalah undangan untuk kompetitor besok.</div>
+
+  <div class="q-card">
+    <div class="q-text">"The key to investing is not assessing how much an industry is going to affect society, or how much it will grow, but rather determining the competitive advantage of any given company and, above all, the durability of that advantage. The products or services that have wide, sustainable moats around them are the ones that deliver rewards to investors."</div>
+    <div class="q-attr">— Warren Buffett · Fortune Magazine, 1999</div>
+  </div>
+
+  <div class="section-lbl">5 Jenis Moat Buffett</div>
+
+  <div class="chk-list">
+    <div class="chk-item" onclick="tog(this,'mq1')"><div class="chk-box">✓</div><div><div class="chk-title">🏷️ Brand Power / Consumer Loyalty</div><div class="chk-desc">Orang mau bayar premium hanya karena nama brand-nya — Coke, Apple, See's Candies. Brand yang di-love, bukan sekedar liked.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mq2')"><div class="chk-box">✓</div><div><div class="chk-title">🔄 Switching Cost yang Tinggi</div><div class="chk-desc">Pelanggan rugi besar jika berpindah — integrasi sistem, data lock-in, retraining staff. Seperti Bloomberg Terminal: $24k/tahun tapi tidak ada yang berani switch.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mq3')"><div class="chk-box">✓</div><div><div class="chk-title">🌐 Network Effect</div><div class="chk-desc">Semakin banyak pengguna → semakin valuable produknya. Amex: lebih banyak merchant terima → lebih banyak user → lebih banyak merchant.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mq4')"><div class="chk-box">✓</div><div><div class="chk-title">💰 Cost Advantage (Low-Cost Producer)</div><div class="chk-desc">Bisa jual lebih murah dari siapapun karena struktur cost yang lebih efisien. GEICO: direct-to-consumer model → 15-20% lebih murah dari kompetitor.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mq5')"><div class="chk-box">✓</div><div><div class="chk-title">📜 Regulatory Moat / Intangible Assets</div><div class="chk-desc">Lisensi eksklusif, patent, regulasi yang membatasi kompetitor. Utility company Berkshire tidak bisa dimasuki kompetitor baru — regulated monopoly.</div></div></div>
+  </div>
+
+  <div class="section-lbl">Pricing Power Analysis</div>
+
+  <div class="field">
+    <div class="field-hd"><span class="field-name">Pricing Power — seberapa bebas bisnis ini menaikkan harga?</span><span class="fval" id="pp-show">5/10</span></div>
+    <input type="range" min="1" max="10" value="5" id="pricing-power" oninput="updateMoat()">
+    <div class="range-lbl"><span>Tidak bisa naik sama sekali</span><span>Naik kapanpun & berapa pun</span></div>
+  </div>
+
+  <div class="field">
+    <div class="field-hd"><span class="field-name">Customer Retention Rate (estimasi %)</span><span class="fval" id="ret-show">80%</span></div>
+    <input type="range" min="40" max="99" value="80" id="retention" oninput="updateMoat()">
+    <div class="range-lbl"><span>40% (churn tinggi)</span><span>99% (sangat sticky)</span></div>
+  </div>
+
+  <div class="card">
+    <div class="res-row"><span class="res-key">Moat Types Teridentifikasi</span><span class="res-val" id="moat-types">0/5</span></div>
+    <div class="res-row"><span class="res-key">Pricing Power Index</span><span class="res-val" id="moat-pp">—</span></div>
+    <div class="res-row"><span class="res-key">Customer Retention</span><span class="res-val" id="moat-ret">—</span></div>
+    <div class="meter-wrap"><div class="meter-fill" id="moat-bar" style="width:0%;background:var(--red)"></div></div>
+    <div class="res-row" style="margin-top:8px"><span class="res-key">Moat Strength Score</span><span class="res-val big" id="moat-score" style="color:var(--gold)">0/25</span></div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-text">"If you gave me $100 billion and said take away the soft drink leadership of Coca-Cola in the world, I'd give it back to you and say it can't be done. That's what a real moat looks like."</div>
+    <div class="q-attr">— Warren Buffett · Definisi ultimate moat</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goTab(0)">← Kembali</button>
+    <button class="btn btn-gold" onclick="goTab(2)">Lanjut ke Owner Earnings →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PANEL 3 — OWNER EARNINGS + DCF
+══════════════════════════════════════ -->
+<div class="panel" id="p2">
+  <div class="eyebrow">Step 03 · Intrinsic Value via Owner Earnings</div>
+  <div class="sec-title">Berapa nilai sesungguhnya?</div>
+  <div class="sec-desc">Buffett tidak pakai P/E atau EV/EBITDA. Dia hitung "Owner Earnings" — cash nyata yang bisa diambil dari bisnis tanpa mengorbankan kemampuannya menghasilkan uang di masa depan.</div>
+
+  <div class="q-card">
+    <div class="q-text">"Intrinsic value can be defined simply: it is the discounted value of the cash that can be taken out of a business during its remaining life. Anyone calculating intrinsic value necessarily comes up with a highly subjective figure. We don't view uncertainty as our enemy; we see it as the friend of the buyer of values."</div>
+    <div class="q-attr">— Warren Buffett · Owner's Manual, 1996</div>
+  </div>
+
+  <div class="tip">
+    <strong>Formula Owner Earnings Buffett:</strong><br>
+    Owner Earnings = Net Income + D&A − Maintenance CapEx ± Working Capital Changes<br><br>
+    Berbeda dari EBITDA yang disebut Buffett sebagai <strong>"a flawed favorite of those who wish to downplay capital requirements"</strong> — karena EBITDA mengabaikan CapEx yang wajib dilakukan untuk mempertahankan bisnis.
+  </div>
+
+  <div class="grid-2">
+    <div class="field">
+      <div class="field-hd"><span class="field-name">Net Income (juta $)</span></div>
+      <input type="number" id="net-income" placeholder="e.g. 100" oninput="calcAll()">
+      <div class="field-sub">Laba bersih setelah pajak, rata-rata 3 tahun</div>
+    </div>
+    <div class="field">
+      <div class="field-hd"><span class="field-name">D&A — Depresiasi & Amortisasi (juta $)</span></div>
+      <input type="number" id="dna" placeholder="e.g. 20" oninput="calcAll()">
+      <div class="field-sub">Ditambahkan karena bukan cash keluar</div>
+    </div>
+    <div class="field">
+      <div class="field-hd"><span class="field-name">Maintenance CapEx (juta $)</span></div>
+      <input type="number" id="capex" placeholder="e.g. 15" oninput="calcAll()">
+      <div class="field-sub">Hanya untuk mempertahankan, bukan ekspansi</div>
+    </div>
+    <div class="field">
+      <div class="field-hd"><span class="field-name">Working Capital Change (juta $)</span></div>
+      <input type="number" id="wc" placeholder="e.g. 5" oninput="calcAll()">
+      <div class="field-sub">Positif = butuh lebih banyak modal kerja</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="res-row"><span class="res-key">Owner Earnings / tahun</span><span class="res-val big" id="oe-val" style="color:var(--gold)">—</span></div>
+    <div class="res-row"><span class="res-key">Capital Intensity</span><span class="res-val" id="oe-intensity">—</span></div>
+  </div>
+
+  <div class="section-lbl">DCF Parameters — Two-Stage Growth</div>
+
+  <div class="grid-2">
+    <div class="field">
+      <div class="field-hd"><span class="field-name">Growth Rate Fase 1 (Tahun 1-10)</span><span class="fval" id="g1-show">10%</span></div>
+      <input type="range" min="1" max="30" value="10" id="g1" oninput="calcAll()">
+      <div class="range-lbl"><span>1%</span><span>30%</span></div>
+    </div>
+    <div class="field">
+      <div class="field-hd"><span class="field-name">Terminal Growth Rate (setelah Tahun 10)</span><span class="fval" id="g2-show">3%</span></div>
+      <input type="range" min="1" max="8" value="3" id="g2" oninput="calcAll()">
+      <div class="range-lbl"><span>1% (GDP low)</span><span>8% (aggressive)</span></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="field-hd"><span class="field-name">Discount Rate — Buffett pakai 9–10% (US 30yr bond rate + equity risk)</span><span class="fval" id="dr-show">10%</span></div>
+    <input type="range" min="6" max="18" value="10" id="disc-rate" oninput="calcAll()">
+    <div class="range-lbl"><span>6% (risk-free + sedikit premium)</span><span>18% (very risky/early stage)</span></div>
+  </div>
+
+  <div class="card">
+    <div class="res-row"><span class="res-key">Total Intrinsic Value (10yr DCF + Terminal)</span><span class="res-val big" id="iv-total" style="color:var(--gold2)">—</span></div>
+    <div class="res-row"><span class="res-key">DCF Phase (Tahun 1-10)</span><span class="res-val" id="iv-dcf">—</span></div>
+    <div class="res-row"><span class="res-key">Terminal Value (after yr 10)</span><span class="res-val" id="iv-term">—</span></div>
+    <div class="res-row"><span class="res-key">Terminal % of Total IV</span><span class="res-val" id="iv-termpct">—</span></div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">📊 DCF Decomposition — Kontribusi Per Tahun ke Intrinsic Value</div>
+    <canvas id="dcf-chart" class="chart-canvas"></canvas>
+  </div>
+
+  <div class="tip info">
+    <strong>Buffett rule:</strong> Jika Terminal Value melebihi 75% dari total IV, kamu sedang membayar terlalu banyak untuk ekspektasi jauh ke depan yang penuh ketidakpastian. Hati-hati dengan bisnis yang hampir seluruh nilainya ada di terminal value.
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goTab(1)">← Kembali</button>
+    <button class="btn btn-gold" onclick="goTab(3)">Lanjut ke Margin of Safety →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PANEL 4 — MARGIN OF SAFETY
+══════════════════════════════════════ -->
+<div class="panel" id="p3">
+  <div class="eyebrow">Step 04 · Margin of Safety</div>
+  <div class="sec-title">Seberapa besar safety cushion-mu?</div>
+  <div class="sec-desc">Konsep MOS dari Ben Graham, disempurnakan Buffett. Beli dengan diskon dari nilai intrinsik untuk memproteksi diri dari kesalahan analisis dan ketidakpastian masa depan.</div>
+
+  <div class="q-card">
+    <div class="q-text">"The three most important words in investing are: margin of safety. You don't try to buy businesses worth $83 million for $80 million. You leave yourself an enormous margin. When you build a bridge, you insist it can carry 30,000 pounds, but you only drive 10,000-pound trucks across it."</div>
+    <div class="q-attr">— Warren Buffett · parafrase dari Ben Graham, Shareholder Meeting</div>
+  </div>
+
+  <div class="field">
+    <div class="field-hd"><span class="field-name">Harga Pasar Saat Ini — Market Cap atau Enterprise Value (juta $)</span></div>
+    <input type="number" id="mkt-price" placeholder="e.g. 600" oninput="calcMOS()">
+    <div class="field-sub">Masukkan nilai sama dengan yang digunakan di Step 03 (juta $)</div>
+  </div>
+
+  <div class="card" id="mos-summary-card">
+    <div class="res-row"><span class="res-key">Intrinsic Value (dari Step 03)</span><span class="res-val big" id="mos-iv" style="color:var(--gold)">—</span></div>
+    <div class="res-row"><span class="res-key">Harga Pasar</span><span class="res-val big" id="mos-mkt">—</span></div>
+    <div class="res-row"><span class="res-key">Margin of Safety</span><span class="res-val big" id="mos-pct" style="color:var(--dim)">—</span></div>
+    <div class="meter-wrap" style="height:12px"><div class="meter-fill" id="mos-bar" style="width:0%"></div></div>
+    <div class="res-row" style="margin-top:8px"><span class="res-key">Buffett Status</span><span class="res-val" id="mos-status">—</span></div>
+  </div>
+
+  <!-- MOS GAUGE SVG -->
+  <div class="chart-wrap">
+    <div class="chart-title">🎯 MOS Gauge — Posisi Harga vs Intrinsic Value</div>
+    <div class="mos-gauge-wrap">
+      <svg class="mos-gauge-svg" viewBox="0 0 260 145" id="mos-gauge-svg">
+        <!-- Background arc zones -->
+        <path d="M 30 130 A 100 100 0 0 1 80 38" stroke="#A83228" stroke-width="18" fill="none" stroke-linecap="round" opacity=".8"/>
+        <path d="M 80 38 A 100 100 0 0 1 130 30" stroke="#C17B2A" stroke-width="18" fill="none" stroke-linecap="round" opacity=".8"/>
+        <path d="M 130 30 A 100 100 0 0 1 180 38" stroke="#1F8A52" stroke-width="18" fill="none" stroke-linecap="round" opacity=".8"/>
+        <path d="M 180 38 A 100 100 0 0 1 230 130" stroke="#145C37" stroke-width="18" fill="none" stroke-linecap="round" opacity=".8"/>
+        <!-- Zone labels -->
+        <text x="22" y="120" font-size="8" fill="#A83228" font-family="monospace">OVER</text>
+        <text x="70" y="26" font-size="8" fill="#C17B2A" font-family="monospace">FAIR</text>
+        <text x="115" y="18" font-size="8" fill="#1F8A52" font-family="monospace">BUY</text>
+        <text x="196" y="26" font-size="8" fill="#145C37" font-family="monospace">DEEP</text>
+        <!-- Needle -->
+        <line id="gauge-needle" x1="130" y1="130" x2="130" y2="40" stroke="var(--cream)" stroke-width="2.5" stroke-linecap="round" transform-origin="130 130" transform="rotate(0,130,130)"/>
+        <circle cx="130" cy="130" r="6" fill="var(--gold)"/>
+        <!-- Center text -->
+        <text x="130" y="108" text-anchor="middle" font-size="20" font-family="monospace" fill="var(--cream)" font-weight="bold" id="gauge-pct-text">—</text>
+        <text x="130" y="120" text-anchor="middle" font-size="8" fill="var(--dim)" font-family="monospace">MOS</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- MOS CHART -->
+  <div class="chart-wrap">
+    <div class="chart-title">📈 MOS Spectrum — Harga vs Nilai di Berbagai Skenario</div>
+    <canvas id="mos-chart" class="chart-canvas"></canvas>
+  </div>
+
+  <!-- SENSITIVITY MATRIX -->
+  <div class="section-lbl">Sensitivity Analysis — IV di Berbagai Growth &amp; Discount Rate</div>
+  <div class="tip">Tabel ini menunjukkan berapa Intrinsic Value jika kamu menggunakan kombinasi Growth Rate (baris) dan Discount Rate (kolom) yang berbeda. <strong>Warna hijau = MOS ≥ 25%</strong>, kuning = fair, merah = overvalued vs harga yang dimasukkan.</div>
+  <div class="sens-wrap">
+    <table class="sens-tbl" id="sens-matrix">
+      <thead>
+        <tr>
+          <th>Growth \ Disc</th>
+          <th>7%</th><th>8%</th><th>9%</th><th>10%</th><th>12%</th><th>15%</th>
+        </tr>
+      </thead>
+      <tbody id="sens-body"></tbody>
+    </table>
+  </div>
+
+  <div class="tip">
+    <strong>Cara baca:</strong> Baris = asumsi growth rate-mu. Kolom = discount rate (risk). Sel yang kamu gunakan di Step 03 akan lebih terang. Jika kebanyakan sel berwarna merah, bisnis ini overvalued di hampir semua skenario.
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goTab(2)">← Kembali</button>
+    <button class="btn btn-gold" onclick="goTab(4)">Lanjut ke Manajemen →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PANEL 5 — MANAGEMENT
+══════════════════════════════════════ -->
+<div class="panel" id="p4">
+  <div class="eyebrow">Step 05 · Management Quality</div>
+  <div class="sec-title">Siapa yang mengemudikan kapal ini?</div>
+  <div class="sec-desc">Buffett beli "able and trustworthy management" — dua kata yang tidak bisa dipisahkan. Bisnis terbaik pun bisa hancur di tangan manajemen yang salah.</div>
+
+  <div class="q-card">
+    <div class="q-text">"We do not wish to join with managers who lack admirable qualities, no matter how attractive the prospects of their business. It's never paid us to make a deal with a bad person. In evaluating people, you look for three qualities: integrity, intelligence, and energy. And if they don't have the first, the other two will kill you."</div>
+    <div class="q-attr">— Warren Buffett · Annual Letter 1989</div>
+  </div>
+
+  <div class="section-lbl">Buffett's 6 Management Criteria (★ 1–5)</div>
+
+  <div class="grid-2">
+    <div class="card-sm">
+      <div class="metric-label" style="text-align:left;margin-bottom:8px">Kejujuran & Transparansi</div>
+      <div class="stars" id="s0"><span class="star" onclick="setStar(0,1)">★</span><span class="star" onclick="setStar(0,2)">★</span><span class="star" onclick="setStar(0,3)">★</span><span class="star" onclick="setStar(0,4)">★</span><span class="star" onclick="setStar(0,5)">★</span></div>
+    </div>
+    <div class="card-sm">
+      <div class="metric-label" style="text-align:left;margin-bottom:8px">Capital Allocation Skill</div>
+      <div class="stars" id="s1"><span class="star" onclick="setStar(1,1)">★</span><span class="star" onclick="setStar(1,2)">★</span><span class="star" onclick="setStar(1,3)">★</span><span class="star" onclick="setStar(1,4)">★</span><span class="star" onclick="setStar(1,5)">★</span></div>
+    </div>
+    <div class="card-sm">
+      <div class="metric-label" style="text-align:left;margin-bottom:8px">Shareholder Orientation</div>
+      <div class="stars" id="s2"><span class="star" onclick="setStar(2,1)">★</span><span class="star" onclick="setStar(2,2)">★</span><span class="star" onclick="setStar(2,3)">★</span><span class="star" onclick="setStar(2,4)">★</span><span class="star" onclick="setStar(2,5)">★</span></div>
+    </div>
+    <div class="card-sm">
+      <div class="metric-label" style="text-align:left;margin-bottom:8px">Long-term Thinking</div>
+      <div class="stars" id="s3"><span class="star" onclick="setStar(3,1)">★</span><span class="star" onclick="setStar(3,2)">★</span><span class="star" onclick="setStar(3,3)">★</span><span class="star" onclick="setStar(3,4)">★</span><span class="star" onclick="setStar(3,5)">★</span></div>
+    </div>
+    <div class="card-sm">
+      <div class="metric-label" style="text-align:left;margin-bottom:8px">Track Record & Consistency</div>
+      <div class="stars" id="s4"><span class="star" onclick="setStar(4,1)">★</span><span class="star" onclick="setStar(4,2)">★</span><span class="star" onclick="setStar(4,3)">★</span><span class="star" onclick="setStar(4,4)">★</span><span class="star" onclick="setStar(4,5)">★</span></div>
+    </div>
+    <div class="card-sm">
+      <div class="metric-label" style="text-align:left;margin-bottom:8px">CEO Gaji vs Performance</div>
+      <div class="stars" id="s5"><span class="star" onclick="setStar(5,1)">★</span><span class="star" onclick="setStar(5,2)">★</span><span class="star" onclick="setStar(5,3)">★</span><span class="star" onclick="setStar(5,4)">★</span><span class="star" onclick="setStar(5,5)">★</span></div>
+    </div>
+  </div>
+
+  <div class="section-lbl">Buffett Management Checklist</div>
+
+  <div class="chk-list">
+    <div class="chk-item" onclick="tog(this,'mc1')"><div class="chk-box">✓</div><div><div class="chk-title">CEO punya skin in the game — invest uang pribadi di bisnis ini</div><div class="chk-desc">Buffett sendiri hold 99% kekayaannya di Berkshire. Manager yang tidak invest sendiri tidak merasakan konsekuensi keputusannya.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mc2')"><div class="chk-box">✓</div><div><div class="chk-title">Tidak menggunakan EBITDA sebagai metric utama</div><div class="chk-desc">Buffett: "EBITDA is a flawed favorite of those who wish to downplay capital requirements." Pakai Free Cash Flow.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mc3')"><div class="chk-box">✓</div><div><div class="chk-title">Pernah secara terbuka mengakui kesalahan bisnis</div><div class="chk-desc">Buffett pakai kata "mistake/error" 16x dalam 5 tahun surat. CEO lain tidak pernah. Kejujuran adalah tanda manajemen yang benar-benar berpikir jangka panjang.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mc4')"><div class="chk-box">✓</div><div><div class="chk-title">Buyback dilakukan ketika harga di bawah nilai intrinsik</div><div class="chk-desc">Buyback ketika overvalued adalah penghancuran nilai shareholder. Buffett hanya approve buyback ketika Berkshire diperdagangkan di bawah IV.</div></div></div>
+    <div class="chk-item" onclick="tog(this,'mc5')"><div class="chk-box">✓</div><div><div class="chk-title">Tidak ganti strategi besar-besaran setiap 2-3 tahun</div><div class="chk-desc">Konsistensi strategi = moat manajemen. Sering ganti strategi = tanda tidak punya competitive advantage yang jelas.</div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="res-row"><span class="res-key">Star Score</span><span class="res-val" id="star-score">0/30</span></div>
+    <div class="res-row"><span class="res-key">Checklist Bonus</span><span class="res-val" id="chk-score">0/5</span></div>
+    <div class="meter-wrap"><div class="meter-fill" id="mgmt-bar" style="width:0%;background:var(--red)"></div></div>
+    <div class="res-row" style="margin-top:8px"><span class="res-key">Management Score</span><span class="res-val big" id="mgmt-total" style="color:var(--gold)">0/25</span></div>
+  </div>
+
+  <div class="q-card">
+    <div class="q-text">"When a management with a reputation for brilliance tackles a business with a reputation for bad economics, it is the reputation of the business that remains intact."</div>
+    <div class="q-attr">— Warren Buffett · bahkan manajemen terbaik tidak bisa fix bisnis yang fundamentalnya jelek</div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goTab(3)">← Kembali</button>
+    <button class="btn btn-gold" onclick="goTab(5)">Lihat Buffett Exceptions →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PANEL 6 — BUFFETT EXCEPTIONS
+══════════════════════════════════════ -->
+<div class="panel" id="p5">
+  <div class="eyebrow">Step 06 · Buffett's Exceptions & Lessons</div>
+  <div class="sec-title">Ketika Oracle melanggar aturannya sendiri</div>
+  <div class="sec-desc">Buffett punya prinsip yang ketat — tapi ada momen di mana dia break rules-nya, baik dengan hasil luar biasa maupun kegagalan mengajarkan pelajaran mahal. Pelajari semua itu.</div>
+
+  <div class="q-card">
+    <div class="q-text">"I make plenty of mistakes. And I'm going to make mistakes in the future. It's part of the game. You just have to make sure that the right things overcome the wrong ones."</div>
+    <div class="q-attr">— Warren Buffett · CNBC Interview</div>
+  </div>
+
+  <div class="exc-grid" id="exc-grid">
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🍎</div>
+        <div><div class="exc-co">Apple (2016 — sekarang)</div><div class="exc-sub">Broke: "No tech companies"</div></div>
+        <div class="exc-result"><div class="exc-badge badge-win">WIN: +$120B+</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"Apple is a better business than any we own. I don't think of it as a stock. I think of it as our third business — right after insurance and BNSF."</div>
+        <div class="exc-lesson">
+          <strong>Rule yang dilanggar:</strong> Buffett selama 30+ tahun bilang dia tidak akan invest di bisnis teknologi karena tidak bisa memprediksi 10 tahun ke depan.<br><br>
+          <strong>Mengapa berhasil:</strong> Dia me-reframe Apple bukan sebagai "tech company" tapi sebagai "consumer franchise company" — seperti Coca-Cola dengan ekosistem. 2 miliar pengguna iPhone adalah captive audience dengan switching cost yang luar biasa tinggi.<br><br>
+          <strong>Pelajaran:</strong> Rules adalah tools, bukan penjara. Ketika bisnis memiliki karakteristik yang kamu cari (moat, pricing power, loyal customers) tapi berada di industri yang kamu hindari — tanyakan apakah industri label-nya memang tepat.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">✈️</div>
+        <div><div class="exc-co">Airlines — Delta, United, Southwest, American (2016–2020)</div><div class="exc-sub">Broke: "Never invest in airlines"</div></div>
+        <div class="exc-result"><div class="exc-badge badge-loss">LOSS: ~$3B</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"The airline business has been extraordinary bad for investors historically... since the Wright Brothers flew at Kitty Hawk. But now the industry has been rationalized." [2016]. Then 2020: "The world changed for airlines."</div>
+        <div class="exc-lesson">
+          <strong>Rule yang dilanggar:</strong> Buffett pernah bilang airlines adalah "death trap for investors" dan bahwa seorang "far-sighted capitalist" seharusnya menembak orville Wright di Kitty Hawk untuk menyelamatkan investor dari kerugian sekian triliun.<br><br>
+          <strong>Mengapa gagal:</strong> Konsolidasi industri airlines 2010-2015 membuat ekonominya lebih baik. Tapi COVID-19 pada Maret 2020 mengubah semua asumsi dalam hitungan minggu — demand turun 95%. Buffett jual semua dengan rugi besar.<br><br>
+          <strong>Pelajaran:</strong> Bahkan analisis terbaik tidak bisa memprediksi Black Swan events. Ini juga mengajarkan bahwa "turnaround industries" lebih sulit daripada yang terlihat karena structural problems bisa kembali sewaktu-waktu. Buffett sendiri akui: "I made a mistake."
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🏭</div>
+        <div><div class="exc-co">Berkshire Hathaway Textile (1962)</div><div class="exc-sub">Cigar butt investing — biggest conceptual mistake</div></div>
+        <div class="exc-result"><div class="exc-badge badge-lesson">LESSON: $0 value</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"Sixty years ago, present management took control of Berkshire. That move was a mistake — my mistake — and one that plagued us for two decades. Charlie spotted my obvious error immediately."</div>
+        <div class="exc-lesson">
+          <strong>Rule yang dilanggar:</strong> Beli bisnis yang sedang sekarat hanya karena harganya sangat murah — "cigar butt investing" ala Ben Graham. Satu hisapan gratis, lalu bisnis mati.<br><br>
+          <strong>Mengapa gagal:</strong> Industri tekstil AS tidak bisa bersaing dengan impor murah dari Asia. Meskipun Berkshire sempat profitable sebentar, setiap dollar profit harus di-reinvestasi kembali ke pabrik yang semakin tidak kompetitif. Tekstil tutup total 1985.<br><br>
+          <strong>Pelajaran terbesar Buffett:</strong> Charlie Munger mengubah pola pikir Buffett dari "beli bisnis mediocre dengan harga sangat murah" menjadi "beli bisnis wonderful dengan harga fair." See's Candies adalah transformasi itu. Tanpa kesalahan Berkshire Textile, tidak ada Berkshire modern.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">👟</div>
+        <div><div class="exc-co">Dexter Shoe Company (1993)</div><div class="exc-sub">Paid with Berkshire STOCK — compounded mistake</div></div>
+        <div class="exc-result"><div class="exc-badge badge-loss">LOSS: ~$3.5B real cost</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"I bought Dexter Shoe for $433 million in Berkshire stock. What I thought was a durable competitive advantage vanished within a few years as foreign competition drove domestic producers out of business. I then compounded this mistake by using Berkshire stock — stock that has since risen enormously in value — instead of cash."</div>
+        <div class="exc-lesson">
+          <strong>Double mistake:</strong> Pertama, salah analisis moat (pikir brand sepatu lokal AS tahan lama, tapi impor murah dari Asia menghancurkannya). Kedua, bayar dengan saham Berkshire yang terus naik — biaya riilnya jauh lebih besar dari $433 juta.<br><br>
+          <strong>Hitung-hitungan Buffett:</strong> Saham Berkshire yang diberikan untuk Dexter sekarang bernilai $3.5 miliar. Sedangkan Dexter bernilai $0. Membayar bisnis gagal dengan bisnis terbaik dunia adalah kerusakan ganda.<br><br>
+          <strong>Pelajaran:</strong> Never pay for a business with shares of your best asset. Dan selalu verifikasi apakah "moat" itu benar-benar tahan terhadap ancaman yang tidak terprediksi — termasuk global competition.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">📦</div>
+        <div><div class="exc-co">Amazon — TIDAK dibeli (1997–sekarang)</div><div class="exc-sub">Terbesar: bisnis besar yang dia lewatkan</div></div>
+        <div class="exc-result"><div class="exc-badge badge-miss">MISSED: 100,000%+ return</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"I was wrong about Google. I was wrong about Amazon. Both of those are great businesses. I just don't know how to value them. I watched Amazon for years. I thought Jeff Bezos was a genius. I just didn't think he could do what he did."</div>
+        <div class="exc-lesson">
+          <strong>Mengapa Buffett tidak beli:</strong> Amazon tidak profitable selama bertahun-tahun karena Bezos sengaja reinvestasi semua cash ke pertumbuhan. Ini berlawanan dengan prinsip Buffett tentang "bisnis yang menghasilkan cash yang bisa diambil." Owner Earnings Amazon di 1997-2010 negatif atau mendekati nol.<br><br>
+          <strong>Yang Buffett salah perkirakan:</strong> Platform bisnis yang build for long-term dan sengaja tidak profitable bisa create moat yang JAUH lebih besar dari bisnis yang profitable dari hari pertama. AWS, Prime, dan Marketplace adalah hasil dari investasi bertahun-tahun tanpa profit.<br><br>
+          <strong>Exception insight:</strong> Ada kasus di mana bisnis dengan Owner Earnings negatif bisa jadi investasi terbaik — tapi butuh keyakinan terhadap founder vision yang hampir tidak mungkin dianalisis secara kuantitatif. Ini adalah blind spot Buffett yang dia akui sendiri.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🏦</div>
+        <div><div class="exc-co">Goldman Sachs — Crisis Investment (2008)</div><div class="exc-sub">Special structure: Preferred + Warrants at crisis price</div></div>
+        <div class="exc-result"><div class="exc-badge badge-win">WIN: +$3.7B profit</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"Be fearful when others are greedy, and greedy when others are fearful. When people fear a company with a strong franchise might fail, that's often the best time to invest — not at market price, but on terms that heavily favor you."</div>
+        <div class="exc-lesson">
+          <strong>Deal structure unik:</strong> September 2008, puncak krisis finansial. Buffett investasi $5 miliar dalam preferred shares Goldman Sachs dengan dividend 10%/tahun PLUS warrants untuk beli saham biasa di $115 (harga saat itu sekitar $125).<br><br>
+          <strong>Mengapa ini berbeda:</strong> Bukan investasi biasa. Ini adalah "rescue financing" dengan terms yang sangat menguntungkan Buffett — dia dapat garanteed 10% return PLUS upside dari recovery Goldman. Goldman desperately butuh signal ke market bahwa bisnis mereka solid, dan nama Buffett adalah signal terkuat.<br><br>
+          <strong>Pelajaran:</strong> Ketika kamu punya modal besar dan market sedang panic, kamu bisa negotiate terms yang biasanya tidak tersedia. Ini bukan sekadar "beli saat diskon" — ini adalah structured deal yang memberi Buffett asymmetric risk/reward.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🇯🇵</div>
+        <div><div class="exc-co">Japanese Trading Houses — Itochu, Marubeni, Mitsubishi, Mitsui, Sumitomo (2020)</div><div class="exc-sub">Broke: "Invest only in what you understand deeply"</div></div>
+        <div class="exc-result"><div class="exc-badge badge-win">WIN: +60%+ gain</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"We simply looked at their financial records and were amazed at the low prices of their stocks. We had no idea about many of the businesses they were in. But we liked the management, we liked the price, and we liked the shareholder-friendly attitudes."</div>
+        <div class="exc-lesson">
+          <strong>Rule yang dilanggar:</strong> Buffett tidak memahami detail bisnis trading houses Jepang (mereka beroperasi di ratusan industri berbeda secara global). Tapi dia beli karena pure financial metrics yang terlalu menarik untuk diabaikan.<br><br>
+          <strong>Mengapa berhasil:</strong> Harga sangat murah (0.6-0.8x book value), manajemen sangat shareholder-friendly (buyback agresif, dividend konsisten, gaji CEO jauh di bawah US counterparts), dan struktur bisnis yang diversified = natural hedge.<br><br>
+          <strong>Exception insight:</strong> Kadang "understanding" bisa berarti understanding financial structure dan management quality tanpa harus tahu detail operasional setiap bisnis. Ini khususnya berlaku untuk well-managed conglomerates dengan track record panjang.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🥤</div>
+        <div><div class="exc-co">Coca-Cola (1988) — Bayar "premium"</div><div class="exc-sub">Paid 15x earnings saat market takut dengan Graham standard</div></div>
+        <div class="exc-result"><div class="exc-badge badge-win">WIN: $1.3B → $25B+</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"I paid what seemed like a high multiple for Coke. But I was certain that Coke in 20 years, in 30 years, would be worth far more per share than it was at that price. When you find something that you are very certain about, pay up."</div>
+        <div class="exc-lesson">
+          <strong>Rule yang "dilanggar":</strong> Benjamin Graham's strict value investing rule: never pay more than 10-12x earnings. Buffett bayar 15x untuk Coke — dianggap premium di 1988.<br><br>
+          <strong>Mengapa berhasil:</strong> Buffett mulai bergeser dari "beli murah" ke "beli certainty." Dia yakin dengan hampir absolut bahwa Coke akan tetap dominant selama 30+ tahun karena brand-nya tidak bisa dibangun ulang dengan uang apapun.<br><br>
+          <strong>Pelajaran generasi investasi:</strong> "It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price." Ini adalah evolusi terbesar Buffett dari Graham — dan ini yang Charlie Munger tanamkan. See's Candies di 1972 adalah awal perubahan ini.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🏦</div>
+        <div><div class="exc-co">Wells Fargo (1989–2022)</div><div class="exc-sub">Hold terlalu lama setelah red flags jelas terlihat</div></div>
+        <div class="exc-result"><div class="exc-badge badge-loss">LESSON: Held too long</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"We made a mistake in not selling sooner when the fraud was becoming clearer. The culture had clearly deteriorated and we should have been more decisive. I was too slow."</div>
+        <div class="exc-lesson">
+          <strong>Apa yang terjadi:</strong> Wells Fargo menciptakan jutaan rekening palsu tanpa sepengetahuan nasabah (skandal terungkap 2016). Buffett tetap hold bahkan setelah skandal — berharap manajemen baru bisa fix culture. Akhirnya jual 2022 dengan loss vs peak.<br><br>
+          <strong>Mengapa terlalu lama:</strong> Biasanya hold-forever adalah keunggulan Buffett. Tapi ketika ada bukti cultural rot di manajemen (bukan hanya business problem), ini adalah signal exit yang seharusnya direspon lebih cepat.<br><br>
+          <strong>Pelajaran:</strong> "Hold forever" berlaku untuk bisnis dengan permanent competitive advantage. Tapi ketika trust antara manajemen, karyawan, dan nasabah hancur secara fundamental — ini bukan sekadar "headwind sementara." Culture yang korup jauh lebih susah diperbaiki daripada balance sheet yang bermasalah.
+        </div>
+      </div>
+    </div>
+
+    <div class="exc-card" onclick="toggleExc(this)">
+      <div class="exc-header">
+        <div class="exc-icon">🍫</div>
+        <div><div class="exc-co">See's Candies (1972) — Beli di 3x Book Value</div><div class="exc-sub">Charlie Munger harus "drag" Buffett ke deal ini</div></div>
+        <div class="exc-result"><div class="exc-badge badge-win">WIN: $25M → $2B+ return</div></div>
+      </div>
+      <div class="exc-body">
+        <div class="exc-q">"Charlie had to drag me into buying See's Candies at $25 million — $8 million over book value. I was too Graham-oriented. I thought: who the hell buys expensive chocolate? But Charlie said: people buy it as a gift, and they associate it with love. The price doesn't matter when it's a gift of love."</div>
+        <div class="exc-lesson">
+          <strong>Paradoks terbesar dalam karir Buffett:</strong> Deal yang paling mengubah cara berpikirnya adalah yang hampir tidak terjadi karena dia terlalu terpaku pada book value.<br><br>
+          <strong>Apa yang See's ajarkan:</strong> Intangible brand value TIDAK muncul di balance sheet. See's hanya punya $8M tangible assets — tapi brand "kotak coklat untuk hadiah" senilai ratusan juta. Pricing power-nya luar biasa: harga coklat naik dari $2/pound di 1972 ke $25+/pound sekarang, dan permintaan tetap stabil.<br><br>
+          <strong>Legacy:</strong> Buffett bilang tanpa See's, tidak ada investasi Coca-Cola. See's mengajarkan bahwa "wonderful business" adalah bisnis yang bisa menaikkan harga tanpa kehilangan pelanggan — dan itu lebih valuable dari aset fisik apapun.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tip">
+    <strong>Pola dari semua exceptions:</strong> Buffett paling sukses ketika dia melanggar aturan untuk menangkap bisnis dengan consumer franchise / brand moat yang sangat kuat (Apple, Coke, See's). Dia paling gagal ketika melanggar aturan untuk bisnis yang terlihat murah tapi tidak punya real moat (Berkshire Textile, Dexter Shoes, Airlines).
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="goTab(4)">← Kembali</button>
+    <button class="btn btn-gold" onclick="goTab(6)">Lihat Verdict Akhir →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PANEL 7 — VERDICT
+══════════════════════════════════════ -->
+<div class="panel" id="p6">
+  <div class="eyebrow">Step 07 · The Oracle's Verdict</div>
+  <div class="sec-title">Keputusan akhir</div>
+  <div class="sec-desc">Semua komponen digabungkan menjadi satu skor dari 100. Ini bukan rekomendasi finansial — ini adalah framework untuk berpikir seperti Buffett.</div>
+
+  <div class="verdict-wrap">
+    <div class="verdict-ring" id="v-ring" style="border-color:var(--dim)">
+      <div class="verdict-big" id="v-num" style="color:var(--dim)">0</div>
+      <div class="verdict-lbl">/ 100</div>
+    </div>
+    <div class="verdict-word" id="v-word" style="color:var(--dim)">—</div>
+    <div class="verdict-desc" id="v-desc">Lengkapi semua langkah untuk mendapatkan verdict final dari Oracle.</div>
+  </div>
+
+  <div class="breakdown-grid">
+    <div class="breakdown-card">
+      <div class="breakdown-lbl">Business Quality</div>
+      <div class="breakdown-score" id="bv-biz" style="color:var(--dim)">—</div>
+      <div class="breakdown-of">dari 25</div>
+    </div>
+    <div class="breakdown-card">
+      <div class="breakdown-lbl">Moat Strength</div>
+      <div class="breakdown-score" id="bv-moat" style="color:var(--dim)">—</div>
+      <div class="breakdown-of">dari 25</div>
+    </div>
+    <div class="breakdown-card">
+      <div class="breakdown-lbl">Margin of Safety</div>
+      <div class="breakdown-score" id="bv-mos" style="color:var(--dim)">—</div>
+      <div class="breakdown-of">dari 25</div>
+    </div>
+    <div class="breakdown-card">
+      <div class="breakdown-lbl">Management</div>
+      <div class="breakdown-score" id="bv-mgmt" style="color:var(--dim)">—</div>
+      <div class="breakdown-of">dari 25</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="res-row"><span class="res-key">Bisnis yang Dianalisis</span><span class="res-val" id="v-biz">—</span></div>
+    <div class="res-row"><span class="res-key">Sektor</span><span class="res-val" id="v-sector">—</span></div>
+    <div class="res-row"><span class="res-key">Owner Earnings / tahun</span><span class="res-val" id="v-oe">—</span></div>
+    <div class="res-row"><span class="res-key">Intrinsic Value</span><span class="res-val" id="v-iv" style="color:var(--gold)">—</span></div>
+    <div class="res-row"><span class="res-key">Margin of Safety</span><span class="res-val" id="v-mos-final">—</span></div>
+  </div>
+
+  <div class="q-card" id="v-quote-card">
+    <div class="q-text" id="v-quote-text">"Price is what you pay. Value is what you get."</div>
+    <div class="q-attr" id="v-quote-attr">— Warren Buffett</div>
+  </div>
+
+  <div class="section-lbl">Buffett's 4 Criteria — Final Checklist</div>
+  <table class="rules-tbl">
+    <thead><tr><th>Kriteria</th><th>Status</th><th>Score</th></tr></thead>
+    <tbody>
+      <tr><td>1. Bisnis yang dipahami</td><td id="r1-status">—</td><td id="r1-score">—</td></tr>
+      <tr><td>2. Favorable long-term economics</td><td id="r2-status">—</td><td id="r2-score">—</td></tr>
+      <tr><td>3. Able & trustworthy management</td><td id="r3-status">—</td><td id="r3-score">—</td></tr>
+      <tr><td>4. Sensible price (MOS)</td><td id="r4-status">—</td><td id="r4-score">—</td></tr>
+    </tbody>
+  </table>
+
+  <div class="tip danger" id="v-warning" style="display:none">
+    <strong>⚠️ Buffett Warning:</strong> Satu atau lebih kriteria kritis tidak terpenuhi. Buffett lebih memilih tidak melakukan apa-apa daripada berinvestasi dalam sesuatu yang tidak memenuhi semua 4 kriteria. "The most important thing to do if you find yourself in a hole is to stop digging."
+  </div>
+
+  <button class="btn btn-gold" onclick="goTab(0)" style="margin-top:16px">Analisis Bisnis Baru →</button>
+</div>
+
+</main>
+
+<script>
+// ══════════════════════════════════
+// STATE
+// ══════════════════════════════════
+const S = {
+  checks: {},
+  stars: [0,0,0,0,0,0],
+  pricingPower: 5,
+  retention: 80,
+  g1: 10, g2: 3, dr: 10,
+  oe: 0, iv: 0, ivDCF: 0, ivTerm: 0,
+  mktPrice: 0, mos: null,
+  metrics: { roe:0, roic:0, gm:0, nm:0, de:0, fcf:0 },
+  dcfChart: null, mosChart: null,
+  dcfInit: false, mosInit: false
+};
+
+// ══════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════
+function goTab(i) {
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+  document.querySelectorAll('.nav-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  if (i===2) { setTimeout(()=>initDCFChart(), 80); }
+  if (i===3) { setTimeout(()=>{ initMOSChart(); buildSensMatrix(); updateMOSGauge(); }, 80); }
+  if (i===6) { calcVerdict(); }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══════════════════════════════════
+// CHECKLIST
+// ══════════════════════════════════
+function tog(el, key) {
+  el.classList.toggle('on');
+  S.checks[key] = el.classList.contains('on');
+  updateAll();
+}
+
+// ══════════════════════════════════
+// STARS
+// ══════════════════════════════════
+function setStar(idx, val) {
+  S.stars[idx] = val;
+  const row = document.getElementById('s'+idx);
+  row.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('on',i<val));
+  updateMgmt();
+}
+
+// ══════════════════════════════════
+// METRICS
+// ══════════════════════════════════
+function updateMetrics() {
+  const v = id => parseFloat(document.getElementById(id).value)||0;
+  S.metrics = { roe:v('m-roe'), roic:v('m-roic'), gm:v('m-gm'), nm:v('m-nm'), de:v('m-de'), fcf:v('m-fcf') };
+
+  const set = (id, txt, good) => {
+    document.getElementById(id).textContent = txt;
+    document.getElementById(id).style.color = good ? 'var(--green2)' : 'var(--red2)';
+  };
+
+  set('r-roe', S.metrics.roe ? (S.metrics.roe>=15?'✓ '+S.metrics.roe+'% (≥15%)':'✗ '+S.metrics.roe+'% (<15%)') : '—', S.metrics.roe>=15);
+  set('r-roic', S.metrics.roic ? (S.metrics.roic>=12?'✓ '+S.metrics.roic+'% (≥12%)':'✗ '+S.metrics.roic+'% (<12%)') : '—', S.metrics.roic>=12);
+  set('r-cap', S.metrics.gm ? (S.metrics.gm>=40?'✓ Gross '+S.metrics.gm+'% — Pricing power ada':'⚠ Gross '+S.metrics.gm+'% — Lemah') : '—', S.metrics.gm>=40);
+  set('r-debt', S.metrics.de!==undefined&&S.metrics.de!==0 ? (S.metrics.de<=1?'✓ D/E '+S.metrics.de+' (konservatif)':'✗ D/E '+S.metrics.de+' (tinggi)') : '—', S.metrics.de<=1);
+
+  let mscore = 0;
+  if (S.metrics.roe>=20) mscore+=6; else if (S.metrics.roe>=15) mscore+=4; else if (S.metrics.roe>0) mscore+=1;
+  if (S.metrics.roic>=15) mscore+=6; else if (S.metrics.roic>=12) mscore+=4; else if (S.metrics.roic>0) mscore+=1;
+  if (S.metrics.gm>=60) mscore+=5; else if (S.metrics.gm>=40) mscore+=3; else if (S.metrics.gm>0) mscore+=1;
+  if (S.metrics.nm>=20) mscore+=4; else if (S.metrics.nm>=10) mscore+=2; else if (S.metrics.nm>0) mscore+=1;
+  if (S.metrics.de>0&&S.metrics.de<=0.5) mscore+=4; else if (S.metrics.de<=1) mscore+=2; else if (S.metrics.de>1) mscore+=0;
+  if (S.metrics.fcf>=15) mscore+=5; else if (S.metrics.fcg>=8) mscore+=3; else if (S.metrics.fcf>0) mscore+=1;
+  S.metricsScore = Math.min(30, mscore);
+  document.getElementById('r-mscore').textContent = S.metricsScore+'/30';
+  document.getElementById('r-mscore').style.color = mscore>=20?'var(--green2)':mscore>=12?'var(--gold)':'var(--red2)';
+  updateBQ();
+}
+
+// ══════════════════════════════════
+// BUSINESS QUALITY
+// ══════════════════════════════════
+function updateBQ() {
+  const bqKeys = ['bq1','bq2','bq3','bq4','bq5','bq6','bq7'];
+  const bqCount = bqKeys.filter(k=>S.checks[k]).length;
+  const bqPct = bqCount/7*100;
+  document.getElementById('bq-score').textContent = bqCount+'/7';
+  const bar = document.getElementById('bq-bar');
+  bar.style.width = bqPct+'%';
+  bar.style.background = bqPct>=80?'var(--green)':bqPct>=50?'var(--amber)':'var(--red)';
+
+  const ms = S.metricsScore||0;
+  const bqBase = bqCount/7*15;
+  const metricsContrib = ms/30*10;
+  S.bqScore = Math.min(25, Math.round(bqBase + metricsContrib));
+  document.getElementById('bq-total').textContent = S.bqScore+'/25';
+  document.getElementById('bq-total').style.color = S.bqScore>=18?'var(--green2)':S.bqScore>=12?'var(--gold)':'var(--dim)';
+  updateTicker();
+}
+
+// ══════════════════════════════════
+// MOAT
+// ══════════════════════════════════
+function updateMoat() {
+  S.pricingPower = +document.getElementById('pricing-power').value;
+  S.retention = +document.getElementById('retention').value;
+  document.getElementById('pp-show').textContent = S.pricingPower+'/10';
+  document.getElementById('ret-show').textContent = S.retention+'%';
+  document.getElementById('moat-pp').textContent = S.pricingPower+'/10';
+  document.getElementById('moat-ret').textContent = S.retention+'%';
+
+  const moatKeys = ['mq1','mq2','mq3','mq4','mq5'];
+  const moatCount = moatKeys.filter(k=>S.checks[k]).length;
+  document.getElementById('moat-types').textContent = moatCount+'/5';
+
+  const raw = moatCount/5*0.5 + S.pricingPower/10*0.3 + (S.retention-40)/(99-40)*0.2;
+  S.moatScore = Math.min(25, Math.round(raw*25));
+  const pct = raw*100;
+  const bar = document.getElementById('moat-bar');
+  bar.style.width = Math.min(100,pct)+'%';
+  bar.style.background = pct>=70?'var(--green)':pct>=45?'var(--amber)':'var(--red)';
+  document.getElementById('moat-score').textContent = S.moatScore+'/25';
+  document.getElementById('moat-score').style.color = S.moatScore>=18?'var(--green2)':S.moatScore>=12?'var(--gold)':'var(--dim)';
+  updateTicker();
+}
+
+// ══════════════════════════════════
+// OWNER EARNINGS + DCF
+// ══════════════════════════════════
+function calcAll() {
+  const v = id => parseFloat(document.getElementById(id).value)||0;
+  const ni=v('net-income'), dna=v('dna'), capex=v('capex'), wc=v('wc');
+  S.g1=+document.getElementById('g1').value;
+  S.g2=+document.getElementById('g2').value;
+  S.dr=+document.getElementById('disc-rate').value;
+  document.getElementById('g1-show').textContent=S.g1+'%';
+  document.getElementById('g2-show').textContent=S.g2+'%';
+  document.getElementById('dr-show').textContent=S.dr+'%';
+
+  S.oe = ni+dna-capex-wc;
+  document.getElementById('oe-val').textContent = ni?'$'+S.oe.toFixed(1)+'M':'—';
+
+  const capexPct = ni>0 ? (capex/ni*100).toFixed(0) : 0;
+  document.getElementById('oe-intensity').textContent = ni ? (capexPct<20?'✓ Capital-light ('+capexPct+'% of income)':capexPct<50?'⚠ Moderate ('+capexPct+'% of income)':'✗ Capital-intensive ('+capexPct+'% of income)') : '—';
+
+  if (!ni) { document.getElementById('iv-total').textContent='—'; return; }
+
+  const g=S.g1/100, r=S.dr/100, gT=S.g2/100;
+  S.ivDCF=0;
+  const annual=[];
+  for(let t=1;t<=10;t++){
+    const cf = S.oe * Math.pow(1+g,t) / Math.pow(1+r,t);
+    S.ivDCF += cf;
+    annual.push(parseFloat(cf.toFixed(2)));
+  }
+  const termNumerator = S.oe * Math.pow(1+g,10) * (1+gT);
+  S.ivTerm = termNumerator / ((r - gT) * Math.pow(1+r,10));
+  if(r<=gT) S.ivTerm = S.oe * Math.pow(1+g,10) * 15 / Math.pow(1+r,10);
+  S.iv = S.ivDCF + S.ivTerm;
+  S.annualDCF = annual;
+
+  document.getElementById('iv-total').textContent = '$'+S.iv.toFixed(0)+'M';
+  document.getElementById('iv-dcf').textContent = '$'+S.ivDCF.toFixed(0)+'M';
+  document.getElementById('iv-term').textContent = '$'+S.ivTerm.toFixed(0)+'M';
+  const termPct = (S.ivTerm/S.iv*100).toFixed(0);
+  document.getElementById('iv-termpct').textContent = termPct+'%';
+
+  if(S.dcfInit) updateDCFChart(annual);
+  calcMOS();
+  updateTicker();
+}
+
+// ══════════════════════════════════
+// MARGIN OF SAFETY
+// ══════════════════════════════════
+function calcMOS() {
+  S.mktPrice = parseFloat(document.getElementById('mkt-price').value)||0;
+  if(!S.iv||!S.mktPrice) {
+    document.getElementById('mos-iv').textContent=S.iv?'$'+S.iv.toFixed(0)+'M':'—';
+    document.getElementById('mos-mkt').textContent=S.mktPrice?'$'+S.mktPrice+'M':'—';
+    document.getElementById('mos-pct').textContent='—';
+    return;
+  }
+  S.mos = (S.iv - S.mktPrice)/S.iv*100;
+  document.getElementById('mos-iv').textContent='$'+S.iv.toFixed(0)+'M';
+  document.getElementById('mos-mkt').textContent='$'+S.mktPrice+'M';
+
+  const mosPct = document.getElementById('mos-pct');
+  mosPct.textContent = S.mos.toFixed(1)+'%';
+  mosPct.style.color = S.mos>=40?'var(--green2)':S.mos>=25?'var(--gold)':S.mos>=0?'orange':'var(--red2)';
+
+  const bar=document.getElementById('mos-bar');
+  bar.style.width=Math.min(100,Math.max(0,S.mos))+'%';
+  bar.style.background=S.mos>=40?'var(--green)':S.mos>=25?'var(--gold)':S.mos>=0?'orange':'var(--red)';
+
+  const status=document.getElementById('mos-status');
+  if(S.mos>=50){status.textContent='🟢 DEEP VALUE — Buffett would be very interested';status.style.color='var(--green2)';}
+  else if(S.mos>=40){status.textContent='🟢 STRONG BUY — Solid margin of safety';status.style.color='var(--green2)';}
+  else if(S.mos>=25){status.textContent='🟡 BUY — Acceptable, Buffett minimum threshold';status.style.color='var(--gold)';}
+  else if(S.mos>=0){status.textContent='🟠 FAIR — No margin. Buffett would wait.';status.style.color='orange';}
+  else{status.textContent='🔴 OVERVALUED — '+(-S.mos).toFixed(0)+'% di atas nilai intrinsik';status.style.color='var(--red2)';}
+
+  S.mosScore = S.mos>=50?25:S.mos>=40?22:S.mos>=25?17:S.mos>=15?10:S.mos>=0?5:0;
+  if(S.mosInit){updateMOSChart();buildSensMatrix();}
+  updateMOSGauge();
+  updateTicker();
+}
+
+// ══════════════════════════════════
+// MANAGEMENT
+// ══════════════════════════════════
+function updateMgmt() {
+  const starSum = S.stars.reduce((a,b)=>a+b,0);
+  const mgmtKeys=['mc1','mc2','mc3','mc4','mc5'];
+  const chkCount = mgmtKeys.filter(k=>S.checks[k]).length;
+  document.getElementById('star-score').textContent=starSum+'/30';
+  document.getElementById('chk-score').textContent=chkCount+'/5';
+
+  const raw=(starSum/30*0.65 + chkCount/5*0.35);
+  S.mgmtScore = Math.min(25,Math.round(raw*25));
+  const pct=raw*100;
+  const bar=document.getElementById('mgmt-bar');
+  bar.style.width=Math.min(100,pct)+'%';
+  bar.style.background=pct>=70?'var(--green)':pct>=45?'var(--amber)':'var(--red)';
+  document.getElementById('mgmt-total').textContent=S.mgmtScore+'/25';
+  document.getElementById('mgmt-total').style.color=S.mgmtScore>=18?'var(--green2)':S.mgmtScore>=12?'var(--gold)':'var(--dim)';
+  updateTicker();
+}
+
+// ══════════════════════════════════
+// TICKER UPDATE
+// ══════════════════════════════════
+function updateTicker() {
+  const bq=S.bqScore||0, mo=S.moatScore||0, ms=S.mosScore||0, mg=S.mgmtScore||0;
+  const total=bq+mo+ms+mg;
+
+  document.getElementById('t-biz').textContent=bq+'/25';
+  document.getElementById('t-biz').style.color=bq>=18?'var(--green2)':bq>=12?'var(--gold)':'var(--dim)';
+  document.getElementById('t-moat').textContent=mo+'/25';
+  document.getElementById('t-moat').style.color=mo>=18?'var(--green2)':mo>=12?'var(--gold)':'var(--dim)';
+
+  if(S.mos!==null&&S.mktPrice>0){
+    document.getElementById('t-mos').textContent=(S.mos>=0?'+':'')+S.mos.toFixed(1)+'%';
+    document.getElementById('t-mos').style.color=S.mos>=25?'var(--green2)':S.mos>=0?'var(--gold)':'var(--red2)';
+  }
+  document.getElementById('t-total').textContent=total+'/100';
+  document.getElementById('t-total').style.color=total>=75?'var(--green2)':total>=55?'var(--gold)':'var(--dim)';
+
+  const pill=document.getElementById('t-pill');
+  if(total>=80){pill.textContent='🟢 STRONG BUY';pill.style.borderColor='var(--green2)';pill.style.color='var(--green2)';pill.style.background='rgba(28,138,82,.1)';}
+  else if(total>=65){pill.textContent='🟡 BUY';pill.style.borderColor='var(--gold)';pill.style.color='var(--gold)';pill.style.background='rgba(201,164,76,.1)';}
+  else if(total>=45){pill.textContent='🟠 WAIT';pill.style.borderColor='orange';pill.style.color='orange';pill.style.background='rgba(255,165,0,.1)';}
+  else if(total>0){pill.textContent='🔴 AVOID';pill.style.borderColor='var(--red2)';pill.style.color='var(--red2)';pill.style.background='rgba(176,48,48,.1)';}
+  else{pill.textContent='Belum dinilai';pill.style.borderColor='var(--dim)';pill.style.color='var(--dim)';pill.style.background='transparent';}
+}
+
+// ══════════════════════════════════
+// DCF CHART
+// ══════════════════════════════════
+function initDCFChart() {
+  if(S.dcfInit) return;
+  const ctx=document.getElementById('dcf-chart').getContext('2d');
+  S.dcfChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['Yr1','Yr2','Yr3','Yr4','Yr5','Yr6','Yr7','Yr8','Yr9','Yr10','Terminal'],
+      datasets:[{
+        label:'Discounted Cash Flow ($M)',
+        data:new Array(11).fill(0),
+        backgroundColor: [...Array(10).fill('rgba(201,164,76,.6)'),'rgba(31,138,82,.7)'],
+        borderColor:[...Array(10).fill('rgba(201,164,76,.9)'),'rgba(40,181,107,.9)'],
+        borderWidth:1.5, borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(1)+'M'}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899AA',font:{family:'JetBrains Mono',size:10}}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899AA',font:{family:'JetBrains Mono',size:10},callback:v=>'$'+v+'M'}}
+      }
+    }
+  });
+  S.dcfInit=true;
+  if(S.annualDCF) updateDCFChart(S.annualDCF);
+}
+
+function updateDCFChart(annual) {
+  if(!S.dcfChart) return;
+  S.dcfChart.data.datasets[0].data=[...annual, parseFloat(S.ivTerm.toFixed(2))];
+  S.dcfChart.update();
+}
+
+// ══════════════════════════════════
+// MOS CHART
+// ══════════════════════════════════
+function initMOSChart() {
+  if(S.mosInit) return;
+  const ctx=document.getElementById('mos-chart').getContext('2d');
+  const labels=[];
+  for(let p=0;p<=200;p+=10) labels.push(p+'%');
+
+  S.mosChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Margin of Safety %',data:[],borderColor:'var(--gold)',backgroundColor:'transparent',borderWidth:2,pointRadius:0,tension:.3},
+        {label:'25% MOS threshold',data:new Array(21).fill(25),borderColor:'rgba(31,138,82,.5)',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+        {label:'40% MOS threshold',data:new Array(21).fill(40),borderColor:'rgba(31,138,82,.8)',borderWidth:1,borderDash:[2,2],pointRadius:0,fill:false},
+        {label:'Current price',data:new Array(21).fill(null),borderColor:'var(--red2)',borderWidth:2,pointRadius:0,fill:false}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:true,
+      plugins:{
+        legend:{labels:{color:'#8899AA',font:{size:10,family:'Inter'}}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw?.toFixed(1)+'%'}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899AA',font:{size:10},maxTicksLimit:11}},
+        y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8899AA',font:{size:10},callback:v=>v+'%'},title:{display:true,text:'Margin of Safety',color:'#8899AA',font:{size:10}}}
+      }
+    }
+  });
+  S.mosInit=true;
+  if(S.iv) updateMOSChart();
+}
+
+function updateMOSChart() {
+  if(!S.mosChart||!S.iv) return;
+  const mosData=[];
+  for(let pct=0;pct<=200;pct+=10){
+    const price=S.iv*pct/100;
+    mosData.push(price>0?parseFloat(((S.iv-price)/S.iv*100).toFixed(1)):null);
+  }
+  S.mosChart.data.datasets[0].data=mosData;
+  if(S.mktPrice&&S.iv){
+    const mktPct=Math.round(S.mktPrice/S.iv*100);
+    const curData=new Array(21).fill(null);
+    const idx=Math.min(20,Math.max(0,Math.round(mktPct/10)));
+    curData[idx]=S.mos;
+    S.mosChart.data.datasets[3].data=curData;
+  }
+  S.mosChart.update();
+}
+
+// ══════════════════════════════════
+// MOS GAUGE
+// ══════════════════════════════════
+function updateMOSGauge() {
+  if(S.mos===null) return;
+  const angle=Math.min(90,Math.max(-90,(S.mos/60)*90));
+  const needle=document.getElementById('gauge-needle');
+  if(needle) needle.setAttribute('transform',`rotate(${-angle},130,130)`);
+  const txt=document.getElementById('gauge-pct-text');
+  if(txt){
+    txt.textContent=(S.mos>=0?'+':'')+S.mos.toFixed(1)+'%';
+    txt.style.fill=S.mos>=40?'#28B56B':S.mos>=25?'#C9A44C':S.mos>=0?'orange':'#D94040';
+  }
+}
+
+// ══════════════════════════════════
+// SENSITIVITY MATRIX
+// ══════════════════════════════════
+function buildSensMatrix() {
+  const growths=[3,5,7,10,12,15,20];
+  const discounts=[7,8,9,10,12,15];
+  const tbody=document.getElementById('sens-body');
+  tbody.innerHTML='';
+  if(!S.oe) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:16px;font-size:12px">Masukkan Owner Earnings di Step 03 dulu</td></tr>'; return; }
+
+  const g2=S.g2/100;
+
+  growths.forEach(g=>{
+    const tr=document.createElement('tr');
+    const th=document.createElement('th');
+    th.textContent=g+'%';
+    th.style.color=g===S.g1?'var(--gold)':'';
+    th.style.fontWeight=g===S.g1?'700':'400';
+    tr.appendChild(th);
+
+    discounts.forEach(d=>{
+      const gR=g/100, dR=d/100;
+      let ivCalc=0;
+      for(let t=1;t<=10;t++) ivCalc+=S.oe*Math.pow(1+gR,t)/Math.pow(1+dR,t);
+      const termNum=S.oe*Math.pow(1+gR,10)*(1+g2);
+      let termCalc=dR>g2?termNum/((dR-g2)*Math.pow(1+dR,10)):S.oe*Math.pow(1+gR,10)*15/Math.pow(1+dR,10);
+      ivCalc+=termCalc;
+
+      const td=document.createElement('td');
+      const mos=S.mktPrice>0?(ivCalc-S.mktPrice)/ivCalc*100:null;
+      td.textContent='$'+ivCalc.toFixed(0)+'M';
+      if(d===S.dr&&g===S.g1){td.style.outline='2px solid var(--gold)';td.style.outlineOffset='-1px';}
+      if(mos!==null){
+        if(mos>=40)td.style.background='rgba(21,92,55,.85)';
+        else if(mos>=25)td.style.background='rgba(40,130,80,.7)';
+        else if(mos>=0)td.style.background='rgba(184,122,28,.65)';
+        else td.style.background='rgba(176,48,48,.7)';
+      } else {
+        td.style.background='rgba(30,42,63,.8)';
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// ══════════════════════════════════
+// EXCEPTIONS TOGGLE
+// ══════════════════════════════════
+function toggleExc(card) {
+  const body=card.querySelector('.exc-body');
+  const isOpen=body.classList.contains('open');
+  document.querySelectorAll('.exc-body').forEach(b=>b.classList.remove('open'));
+  if(!isOpen) body.classList.add('open');
+}
+
+// ══════════════════════════════════
+// VERDICT
+// ══════════════════════════════════
+function calcVerdict() {
+  const bq=S.bqScore||0, mo=S.moatScore||0, ms=S.mosScore||0, mg=S.mgmtScore||0;
+  const total=bq+mo+ms+mg;
+
+  document.getElementById('v-num').textContent=total;
+  document.getElementById('bv-biz').textContent=bq;
+  document.getElementById('bv-moat').textContent=mo;
+  document.getElementById('bv-mos').textContent=ms;
+  document.getElementById('bv-mgmt').textContent=mg;
+
+  ['bv-biz','bv-moat','bv-mos','bv-mgmt'].forEach((id,i)=>{
+    const val=[bq,mo,ms,mg][i];
+    document.getElementById(id).style.color=val>=18?'var(--green2)':val>=12?'var(--gold)':'var(--red2)';
+  });
+
+  document.getElementById('v-biz').textContent=document.getElementById('biz-name').value||'—';
+  document.getElementById('v-sector').textContent=document.getElementById('biz-sector').value||'—';
+  document.getElementById('v-oe').textContent=S.oe?'$'+S.oe.toFixed(1)+'M':'—';
+  document.getElementById('v-iv').textContent=S.iv?'$'+S.iv.toFixed(0)+'M':'—';
+  document.getElementById('v-mos-final').textContent=S.mos!==null?S.mos.toFixed(1)+'%':'—';
+
+  const ring=document.getElementById('v-ring'), vn=document.getElementById('v-num'), vw=document.getElementById('v-word'), vd=document.getElementById('v-desc');
+
+  const configs={
+    strong:{c:'var(--green2)',w:'STRONG BUY',d:'Bisnis ini memenuhi hampir semua kriteria Buffett. Moat kuat, manajemen solid, dan harga memberikan cushion yang cukup. Kandidat kuat untuk hold-forever portfolio.',q:'Wonderful company at a fair price. When you find something you are certain about, act decisively and hold forever.',qa:'Warren Buffett · Apple investment thesis 2016'},
+    buy:{c:'var(--gold)',w:'BUY — dengan catatan',d:'Fundamental bagus tapi ada satu-dua komponen yang belum optimal. Buffett akan invest tapi mungkin dengan position size yang lebih kecil sambil menunggu harga lebih baik.',q:"It's far better to buy a wonderful company at a fair price than a fair company at a wonderful price.",qa:'Warren Buffett · See\'s Candies lesson, 1972'},
+    wait:{c:'orange',w:'WAIT — Masuk watchlist',d:'Ada potensi, tapi valuasi belum menarik atau ada aspek bisnis yang perlu lebih diyakini. Buffett sangat sabar — dia bisa menunggu bertahun-tahun untuk pitch yang tepat.',q:'The stock market is a device for transferring money from the impatient to the patient. Your time horizon is your biggest competitive advantage.',qa:'Warren Buffett · Shareholder Meeting'},
+    avoid:{c:'var(--red2)',w:'AVOID — Tidak memenuhi syarat',d:'Terlalu banyak kriteria yang tidak terpenuhi. Buffett lebih baik tidak melakukan apa-apa daripada melakukan kesalahan. Cash adalah posisi valid ketika tidak ada yang compelling.',q:'The most important thing to do if you find yourself in a hole is to stop digging. We never make an investment just to be doing something.',qa:'Warren Buffett · Annual Letter 2002'}
+  };
+
+  const cfg=total>=80?configs.strong:total>=60?configs.buy:total>=40?configs.wait:configs.avoid;
+  ring.style.borderColor=cfg.c; ring.style.background=cfg.c+'22';
+  vn.style.color=cfg.c; vw.style.color=cfg.c; vw.textContent=cfg.w; vd.textContent=cfg.d;
+  document.getElementById('v-quote-text').textContent='"'+cfg.q+'"';
+  document.getElementById('v-quote-attr').textContent='— '+cfg.qa;
+
+  // 4 criteria table
+  const setRow=(n,s,score,good)=>{
+    document.getElementById('r'+n+'-status').textContent=s;
+    document.getElementById('r'+n+'-status').style.color=good?'var(--green2)':'var(--red2)';
+    document.getElementById('r'+n+'-score').textContent=score;
+  };
+  setRow(1,bq>=15?'✓ Dipahami':'✗ Kurang dipahami',bq+'/25',bq>=15);
+  setRow(2,mo>=15?'✓ Economics solid':'✗ Economics lemah',mo+'/25',mo>=15);
+  setRow(3,mg>=15?'✓ Manajemen kuat':'✗ Perlu evaluasi',mg+'/25',mg>=15);
+  setRow(4,ms>=17?'✓ Harga menarik':'✗ Harga terlalu tinggi',ms+'/25',ms>=17);
+
+  const warning=document.getElementById('v-warning');
+  warning.style.display=(bq<12||mo<12||ms<10||mg<12)?'block':'none';
+}
+
+// ══════════════════════════════════
+// UNIFIED UPDATE
+// ══════════════════════════════════
+function updateAll() {
+  updateMetrics();
+  updateMoat();
+  calcAll();
+  updateMgmt();
+  updateBQ();
+}
+
+// Init
+updateTicker();
+</script>
+</body>
+</html>
